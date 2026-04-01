@@ -3,109 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Eagle Solitaire Cascade</title>
+    <title>Eagle Solitaire Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         body { background: radial-gradient(circle at center, #1a472a 0%, #0d2415 100%); height: 100vh; overflow: hidden; margin: 0; font-family: sans-serif; color: white; touch-action: none; }
-        
-        /* LA CASCADE : Chaque carte dépasse de la précédente */
-        .column .card { 
-            margin-bottom: -45px; /* Décale la carte suivante vers le bas */
-            position: relative;
-            z-index: 10;
-        }
-
-        .card { 
-            width: 44px; height: 65px; background: white; border-radius: 5px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 0.8rem; box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-            border: 1px solid #ddd; transition: transform 0.1s;
-        }
-        
-        .card.red { color: #e11d48; }
-        .card.black { color: #111; }
-        
-        .column { min-height: 350px; width: 44px; display: flex; flex-direction: column; align-items: center; }
-        .slot { width: 44px; height: 65px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 5px; }
-        
-        /* Pour les cases du haut, on ne veut PAS de cascade */
+        .card { width: 44px; height: 65px; border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 1px solid #ddd; position: relative; background: white; }
+        .card.hidden { background: #2563eb !important; border: 2px solid white; color: transparent !important; }
+        .card.red { color: #e11d48; } .card.black { color: #111; }
+        .column { min-height: 280px; width: 44px; display: flex; flex-direction: column; align-items: center; }
+        .column .card { margin-bottom: -48px; }
+        .slot { width: 44px; height: 65px; border: 1px dashed rgba(255,255,255,0.15); border-radius: 5px; position: relative; }
         .foundation .card { margin-bottom: 0 !important; position: absolute; }
     </style>
 </head>
 <body class="p-2">
-    <div class="flex justify-between items-center mb-4">
-        <button onclick="window.location.href='https://eagle-tetris.vercel.app'" class="bg-black/80 text-[10px] px-3 py-2 rounded border border-white/20 uppercase font-bold">⬅ Hub</button>
-        <div class="text-blue-400 font-bold text-[10px] border border-blue-500/20 px-2 py-1 rounded bg-blue-900/10">$TALONS SYNC</div>
+    <div class="flex justify-between items-center mb-4 px-1">
+        <button onclick="window.location.href='https://eagle-tetris.vercel.app'" class="bg-black/80 text-[9px] px-2 py-1.5 rounded border border-white/20 uppercase font-bold">⬅ Hub</button>
+        <div class="text-blue-400 font-bold text-[9px] border border-blue-500/20 px-2 py-1 rounded bg-blue-900/10">$TALONS SYNC</div>
     </div>
-
-    <div class="flex justify-center gap-1.5 mb-6">
-        <div class="slot foundation" id="f1"></div>
-        <div class="slot foundation" id="f2"></div>
-        <div class="slot foundation" id="f3"></div>
-        <div class="slot foundation" id="f4"></div>
-        <div class="w-4"></div>
-        <div class="slot bg-white/5 flex items-center justify-center text-xs opacity-20">🎴</div>
+    <div class="flex justify-between px-2 mb-8">
+        <div class="flex gap-1"><div class="slot foundation"></div><div class="slot foundation"></div><div class="slot foundation"></div><div class="slot foundation"></div></div>
+        <div class="flex gap-1"><div id="waste" class="slot"></div><div id="deck" onclick="drawCard()" class="slot bg-blue-600 border-2 border-white flex items-center justify-center font-bold">🦅</div></div>
     </div>
-
     <div id="game-grid" class="flex justify-center gap-1.5">
-        <div class="column" id="col1"></div>
-        <div class="column" id="col2"></div>
-        <div class="column" id="col3"></div>
-        <div class="column" id="col4"></div>
-        <div class="column" id="col5"></div>
-        <div class="column" id="col6"></div>
-        <div class="column" id="col7"></div>
+        <div class="column" id="col1"></div><div class="column" id="col2"></div><div class="column" id="col3"></div><div class="column" id="col4"></div><div class="column" id="col5"></div><div class="column" id="col6"></div><div class="column" id="col7"></div>
     </div>
-
     <div class="fixed bottom-4 left-0 w-full px-6 text-center">
-        <button onclick="location.reload()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-xl shadow-lg uppercase text-xs mb-2">Nouvelle Partie</button>
-        <p class="text-[8px] text-white/30 tracking-widest uppercase">10% SLIP | 0.001 SOL | EAGLE ENGINE</p>
+        <button onclick="location.reload()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-xl shadow-lg uppercase text-xs">Nouvelle Partie</button>
     </div>
-
-    <script>
-        const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-        const symbols = ['♠', '♥', '♣', '♦'];
-
-        const config = {
-            group: 'shared',
-            animation: 150,
-            onAdd: function (evt) {
-                const card = evt.item;
-                const target = evt.to;
-                const lastCard = target.children[target.children.length - 2];
-                
-                let valid = false;
-                if (!lastCard) {
-                    if (card.dataset.val === 'K' || target.classList.contains('foundation')) valid = true;
-                } else {
-                    const cVal = values.indexOf(card.dataset.val);
-                    const lVal = values.indexOf(lastCard.dataset.val);
-                    const cRed = (card.dataset.sym === '♥' || card.dataset.sym === '♦');
-                    const lRed = (lastCard.dataset.sym === '♥' || lastCard.dataset.sym === '♦');
-
-                    if (cRed !== lRed && cVal === lVal - 1) valid = true;
+        <script>
+        const suits = ['♠', '♥', '♣', '♦'], values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        let fullDeck = [];
+        function init() {
+            suits.forEach(s => values.forEach(v => fullDeck.push({v, s})));
+            fullDeck.sort(() => Math.random() - 0.5);
+            for(let i=1; i<=7; i++) { for(let j=0; j<i; j++) { const c = fullDeck.pop(); addC(`col${i}`, c.v, c.s, j < i-1); } }
+        }
+        function addC(t, v, s, h) {
+            const c = document.createElement('div');
+            c.className = `card ${h ? 'hidden' : (s==='♥'||s==='♦' ? 'red' : 'black')}`;
+            c.dataset.val = v; c.dataset.sym = s; c.innerHTML = h ? '' : `<div>${v}</div><div>${s}</div>`;
+            document.getElementById(t).appendChild(c);
+        }
+        function drawCard() {
+            const w = document.getElementById('waste');
+            if(fullDeck.length > 0) { const c = fullDeck.pop(); w.innerHTML = ''; addC('waste', c.v, c.s, false); }
+            else { location.reload(); }
+        }
+        document.querySelectorAll('.column, .foundation, #waste').forEach(el => {
+            new Sortable(el, { group: 'shared', animation: 150, onAdd: (evt) => {
+                const c = evt.item, t = evt.to, l = t.children[t.children.length - 2];
+                let ok = false;
+                if(!l) { if(c.dataset.val === 'K' || t.classList.contains('foundation')) ok = true; }
+                else { 
+                    const cv = values.indexOf(c.dataset.val), lv = values.indexOf(l.dataset.val);
+                    const cr = (c.dataset.sym==='♥'||c.dataset.sym==='♦'), lr = (l.dataset.sym==='♥'||l.dataset.sym==='♦');
+                    if(cr !== lr && cv === lv - 1) ok = true;
                 }
-
-                if (!valid) evt.from.appendChild(card);
-            }
-        };
-
-        document.querySelectorAll('.column, .foundation').forEach(el => new Sortable(el, config));
-
-        function createCard(val, sym, colId) {
-            const card = document.createElement('div');
-            card.className = `card ${(sym === '♥' || sym === '♦') ? 'red' : 'black'}`;
-            card.dataset.val = val; card.dataset.sym = sym;
-            card.innerHTML = `<div>${val}</div><div class="text-lg">${sym}</div>`;
-            document.getElementById(colId).appendChild(card);
-        }
-
-        for(let i=1; i<=7; i++) {
-            for(let j=0; j<i; j++) {
-                createCard(values[Math.floor(Math.random()*13)], symbols[Math.floor(Math.random()*4)], `col${i}`);
-            }
-        }
+                if(!ok) evt.from.appendChild(c);
+                if(evt.from.lastElementChild) {
+                    const last = evt.from.lastElementChild;
+                    if(last.classList.contains('hidden')) {
+                        last.classList.remove('hidden');
+                        last.classList.add( (last.dataset.sym==='♥'||last.dataset.sym==='♦') ? 'red' : 'black' );
+                        last.innerHTML = `<div>${last.dataset.val}</div><div>${last.dataset.sym}</div>`;
+                    }
+                }
+            }});
+        });
+        init();
     </script>
 </body>
 </html>
