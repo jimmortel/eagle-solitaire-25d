@@ -3,49 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Eagle Solitaire 2.5D</title>
+    <title>Eagle Solitaire</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: radial-gradient(circle at center, #1a472a 0%, #0d2415 100%); height: 100vh; overflow: hidden; color: white; margin: 0; }
-        /* ON FORCE TOUT VERS LE HAUT POUR ÉVITER LE TROMBONE */
+        body { background: #0d2415; height: 100vh; overflow: hidden; margin: 0; font-family: sans-serif; }
         .card { 
-            width: 50px; height: 75px; background: white; border-radius: 8px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5); position: absolute;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 1.1rem; color: #111; z-index: 10;
+            width: 55px; height: 80px; background: white; border-radius: 8px; 
+            position: absolute; display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; font-weight: bold; font-size: 1.2rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: all 0.3s ease;
+            touch-action: none; border: 1px solid #ccc;
         }
-        .card.red { color: #e11d48; }
-        .slot { width: 50px; height: 75px; border: 1px dashed rgba(255,255,255,0.2); border-radius: 8px; }
+        .slot { width: 55px; height: 80px; border: 2px dashed rgba(255,255,255,0.1); border-radius: 8px; }
     </style>
 </head>
 <body class="p-4">
-    <div class="flex justify-between items-center mb-4">
-        <button onclick="window.location.href='https://eagle-tetris.vercel.app'" class="bg-black/60 px-3 py-2 rounded-xl text-[10px] border border-white/20 uppercase font-bold">⬅ Hub</button>
-        <div class="text-[10px] font-bold text-blue-400 px-2 py-1 rounded bg-blue-900/30 border border-blue-500/40">$TALONS ON</div>
+    <div class="flex justify-between items-center mb-6">
+        <button onclick="window.location.href='https://eagle-tetris.vercel.app'" class="bg-black text-white text-[10px] px-3 py-2 rounded-lg border border-white/20">⬅ HUB</button>
+        <div class="text-blue-400 font-bold text-[10px] border border-blue-500/30 px-2 py-1 rounded bg-blue-900/20">$TALONS SYNC</div>
     </div>
 
-    <div id="game-board" class="relative w-full h-[35vh]">
-        <div class="flex justify-center gap-1 mb-10">
-            <div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div>
-        </div>
-        <div class="card" style="top: 80px; left: 10%; transform: rotate(-5deg);" onclick="this.style.transform='translateY(-20px)'">A♠</div>
-        <div class="card red" style="top: 85px; left: 40%; transform: rotate(2deg);" onclick="this.style.transform='translateY(-20px)'">K♥</div>
-        <div class="card" style="top: 82px; left: 70%; transform: rotate(-2deg);" onclick="this.style.transform='translateY(-20px)'">Q♣</div>
+    <div class="flex justify-center gap-2 mb-12">
+        <div class="slot" id="s1"></div><div class="slot" id="s2"></div><div class="slot" id="s3"></div><div class="slot" id="s4"></div>
     </div>
 
-    <div class="mt-8 px-4">
-        <button onclick="location.reload()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-2xl uppercase shadow-2xl active:scale-95 transition-all">
-            Mélanger & Jouer
-        </button>
-        <p class="text-[9px] text-center text-white/40 mt-4 tracking-widest uppercase">10% SLIP | 0.001 SOL | EAGLE SETTINGS</p>
+    <div id="c1" class="card text-black" style="top:200px; left:15%;" onclick="moveCard('c1', 's1')">A♠</div>
+    <div id="c2" class="card text-red-600" style="top:210px; left:42%;" onclick="moveCard('c2', 's2')">K♥</div>
+    <div id="c3" class="card text-black" style="top:205px; left:70%;" onclick="moveCard('c3', 's3')">Q♣</div>
+
+    <div class="fixed bottom-10 left-0 w-full px-6">
+        <button onclick="location.reload()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-2xl shadow-2xl">MÉLANGER</button>
+        <p class="text-[9px] text-center text-white/30 mt-4 tracking-widest">10% SLIP | 0.001 SOL | EAGLE ARCADE</p>
     </div>
 
     <script>
-        // Script pour désactiver la toolbar au clic si elle existe
-        document.body.addEventListener('touchstart', function() {
-            const tb = document.querySelector('vercel-toolbar');
-            if(tb) tb.style.display = 'none';
-        }, {once: true});
+        function moveCard(cardId, slotId) {
+            const card = document.getElementById(cardId);
+            const slot = document.getElementById(slotId);
+            const rect = slot.getBoundingClientRect();
+            
+            // Animation vers le slot
+            card.style.top = rect.top + "px";
+            card.style.left = rect.left + "px";
+            card.style.transform = "rotate(0deg) scale(1.05)";
+            card.style.zIndex = "100";
+        }
     </script>
 </body>
 </html>
