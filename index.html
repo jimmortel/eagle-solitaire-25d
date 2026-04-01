@@ -5,29 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Eagle Solitaire</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         body { background: #0d2415; height: 100vh; overflow: hidden; margin: 0; font-family: sans-serif; color: white; }
         .card { 
-            width: 42px; height: 60px; background: white; border-radius: 4px; 
-            position: absolute; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-            border: 1px solid #ddd; touch-action: none; transition: transform 0.2s;
+            width: 44px; height: 65px; background: white; border-radius: 5px; 
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            border: 1px solid #ddd; margin-bottom: -45px; /* Chevauchement */
+            touch-action: none; cursor: grab;
         }
         .card.red { color: #e11d48; }
         .card.black { color: #111; }
-        .slot { width: 42px; height: 60px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 4px; }
-        .column { position: relative; width: 42px; height: 200px; }
+        .column { min-height: 150px; width: 44px; display: flex; flex-direction: column; align-items: center; }
+        .slot { width: 44px; height: 65px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 5px; }
     </style>
 </head>
 <body class="p-2">
     <div class="flex justify-between items-center mb-4">
-        <button onclick="window.location.href='https://eagle-tetris.vercel.app'" class="bg-black/80 text-[9px] px-2 py-1.5 rounded border border-white/20 uppercase font-bold">⬅ Hub</button>
-        <div class="text-blue-400 font-bold text-[9px] border border-blue-500/20 px-2 py-1 rounded bg-blue-900/10">$TALONS ACTIVE</div>
+        <button onclick="window.location.href='https://eagle-tetris.vercel.app'" class="bg-black/80 text-[10px] px-3 py-2 rounded border border-white/20 uppercase font-bold">⬅ Hub</button>
+        <div class="text-blue-400 font-bold text-[10px] border border-blue-500/20 px-2 py-1 rounded bg-blue-900/10">$TALONS SYNC</div>
     </div>
 
-    <div class="flex justify-center gap-1.5 mb-6">
-        <div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div>
-        <div class="w-4"></div> <div class="slot bg-white/5 flex items-center justify-center text-[10px]">🎴</div>
+    <div class="flex justify-center gap-1.5 mb-8">
+        <div class="slot foundation"></div><div class="slot foundation"></div><div class="slot foundation"></div><div class="slot foundation"></div>
+        <div class="w-4"></div>
+        <div class="slot bg-white/5 flex items-center justify-center text-xs">🎴</div>
     </div>
 
     <div id="game-grid" class="flex justify-center gap-1.5">
@@ -42,33 +45,36 @@
 
     <div class="fixed bottom-6 left-0 w-full px-6 text-center">
         <button onclick="location.reload()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-xl shadow-lg uppercase text-xs mb-3">Nouvelle Partie</button>
-        <p class="text-[8px] text-white/30 tracking-widest uppercase">10% Slip | 0.001 SOL | Eagle Arcade</p>
+        <p class="text-[8px] text-white/30 tracking-widest uppercase">Slippage: 10% | Fee: 0.001 SOL | $TALONS</p>
     </div>
 
     <script>
         const symbols = ['♠', '♥', '♣', '♦'];
         const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-        function createCard(val, sym, colIndex, rowIndex) {
+        // Initialisation des colonnes pour le Drag & Drop
+        document.querySelectorAll('.column, .foundation').forEach(el => {
+            new Sortable(el, {
+                group: 'shared',
+                animation: 150,
+                fallbackOnBody: true,
+                swapThreshold: 0.65
+            });
+        });
+
+        function createCard(val, sym, colId) {
             const card = document.createElement('div');
             card.className = `card ${(sym === '♥' || sym === '♦') ? 'red' : 'black'}`;
             card.innerHTML = `${val}<br>${sym}`;
-            card.style.top = (rowIndex * 15) + "px"; // Empilement vertical
-            
-            card.onclick = () => {
-                card.style.transform = "translateY(-15px) scale(1.1)";
-                setTimeout(() => card.style.transform = "translateY(0) scale(1)", 200);
-            };
-
-            document.getElementById(`col${colIndex + 1}`).appendChild(card);
+            document.getElementById(colId).appendChild(card);
         }
 
-        // Distribution de base pour le visuel
-        for(let i=0; i<7; i++) {
-            for(let j=0; j<=i; j++) {
-                const randomVal = values[Math.floor(Math.random() * values.length)];
-                const randomSym = symbols[Math.floor(Math.random() * symbols.length)];
-                createCard(randomVal, randomSym, i, j);
+        // Distribution
+        for(let i=1; i<=7; i++) {
+            for(let j=0; j<i; j++) {
+                const rV = values[Math.floor(Math.random() * values.length)];
+                const rS = symbols[Math.floor(Math.random() * symbols.length)];
+                createCard(rV, rS, `col${i}`);
             }
         }
     </script>
