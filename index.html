@@ -3,74 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Eagle Solitaire 2.5D 🃏</title>
+    <meta name="vercel-toolbar" content="off">
+    <title>Eagle Solitaire 2.5D</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: radial-gradient(circle at center, #1a472a 0%, #0d2415 100%); min-height: 100vh; overflow: hidden; color: white; font-family: sans-serif; }
+        body { background: radial-gradient(circle at center, #1a472a 0%, #0d2415 100%); height: 100vh; overflow: hidden; color: white; margin: 0; }
         .card { 
-            width: 60px; height: 90px; background: white; border-radius: 8px; 
-            box-shadow: 3px 3px 10px rgba(0,0,0,0.5), inset 0 0 5px rgba(0,0,0,0.1);
-            transform-style: preserve-3d; transition: transform 0.2s; position: absolute;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 1.2rem;
+            width: 48px; height: 70px; background: white; border-radius: 6px; 
+            box-shadow: 2px 2px 6px rgba(0,0,0,0.4); position: absolute;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 1rem; color: #111;
         }
         .card.red { color: #e11d48; }
-        .card.black { color: #111; }
-        .card-back { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border: 2px solid white; }
-        .slot { width: 60px; height: 90px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 8px; }
-        .neon-glow { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        .slot { width: 48px; height: 70px; border: 1px dashed rgba(255,255,255,0.2); border-radius: 6px; }
     </style>
 </head>
-<body class="p-4">
-
+<body class="p-3">
     <div class="flex justify-between items-center mb-6">
-        <button onclick="window.location.href='https://eagle-tetris.vercel.app'" class="bg-black/40 px-4 py-2 rounded-full text-xs font-bold border border-white/10 uppercase">
-            ⬅ Hub Arcade
-        </button>
-        <div class="text-center text-yellow-400 font-black tracking-tighter uppercase">Solitaire 2.5D 🦅</div>
-        <div class="text-xs font-bold bg-blue-600/20 text-blue-400 px-3 py-1 rounded-lg border border-blue-500/30">$TALONS Mode</div>
+        <button onclick="window.location.href='https://eagle-tetris.vercel.app'" class="bg-black/50 px-3 py-1 rounded-full text-[10px] border border-white/20 uppercase font-bold">⬅ Hub</button>
+        <div class="text-[10px] font-bold text-blue-400 px-2 py-1 rounded bg-blue-600/10 border border-blue-500/20">$TALONS SYNC</div>
     </div>
 
-    <div id="game-board" class="relative w-full h-[60vh] mt-4 flex flex-wrap justify-center gap-2">
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-        
-        <div class="card black" style="top: 150px; left: 20%; transform: rotate(-5deg) translateZ(10px);">A♠</div>
-        <div class="card red" style="top: 160px; left: 40%; transform: rotate(2deg) translateZ(20px);">K♥</div>
-        <div class="card black" style="top: 155px; left: 60%; transform: rotate(-2deg) translateZ(30px);">Q♣</div>
+    <div id="game-board" class="relative w-full h-[45vh] flex justify-center gap-2">
+        <div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div>
+        <div class="card" style="top: 90px; left: 10%; transform: rotate(-4deg);">A♠</div>
+        <div class="card red" style="top: 95px; left: 40%; transform: rotate(2deg);">K♥</div>
+        <div class="card" style="top: 92px; left: 70%; transform: rotate(-1deg);">Q♣</div>
     </div>
 
-    <div class="fixed bottom-10 left-0 w-full px-6 space-y-4">
-        <button class="w-full bg-yellow-500 text-black font-black py-4 rounded-2xl uppercase shadow-lg active:scale-95 transition-transform">
-            Mélanger & Distribuer
-        </button>
-        <p class="text-[10px] text-center text-white/50 uppercase tracking-widest">Settings: 10% Slip | 0.001 SOL Fee | $TALONS</p>
+    <div class="fixed bottom-8 left-0 w-full px-6">
+        <button onclick="location.reload()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-2xl uppercase text-sm shadow-2xl active:scale-95 transition-transform">Mélanger & Jouer</button>
+        <p class="text-[9px] text-center text-white/40 mt-4 tracking-tighter">10% SLIP | 0.001 SOL FEE | EAGLE ARCADE</p>
     </div>
-
-    <script>
-        // CONFIGURATION TRANSACTIONNELLE $TALONS
-        const SOL_CONFIG = {
-            slippage: "10%",
-            priorityFee: 0.001,
-            token: "$TALONS",
-            frontRun: "Auto"
-        };
-
-        // Interaction basique 2.5D
-        document.querySelectorAll('.card').forEach(card => {
-            card.addEventListener('click', () => {
-                card.style.transform += ' translateY(-20px) rotate(5deg) scale(1.1)';
-                card.classList.add('neon-glow');
-                setTimeout(() => {
-                    card.style.transform = card.style.transform.replace(' translateY(-20px) rotate(5deg) scale(1.1)', '');
-                    card.classList.remove('neon-glow');
-                }, 500);
-            });
-        });
-
-        console.log("Eagle Solitaire 2.5D Initialized with $TALONS settings.");
-    </script>
 </body>
-  </html>
+</html>
