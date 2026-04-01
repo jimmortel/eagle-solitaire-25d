@@ -3,21 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Eagle Solitaire</title>
+    <title>Eagle Solitaire Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
-        body { background: #0d2415; height: 100vh; overflow: hidden; margin: 0; font-family: sans-serif; color: white; }
+        body { background: #0d2415; height: 100vh; overflow: hidden; margin: 0; font-family: sans-serif; color: white; touch-action: none; }
         .card { 
             width: 44px; height: 65px; background: white; border-radius: 5px; 
             display: flex; align-items: center; justify-content: center;
             font-weight: bold; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            border: 1px solid #ddd; margin-bottom: -45px; /* Chevauchement */
-            touch-action: none; cursor: grab;
+            border: 1px solid #ddd; margin-bottom: -48px; position: relative;
         }
         .card.red { color: #e11d48; }
         .card.black { color: #111; }
-        .column { min-height: 150px; width: 44px; display: flex; flex-direction: column; align-items: center; }
+        .column { min-height: 250px; width: 44px; display: flex; flex-direction: column; align-items: center; border-radius: 5px; background: rgba(255,255,255,0.03); }
         .slot { width: 44px; height: 65px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 5px; }
     </style>
 </head>
@@ -27,10 +26,13 @@
         <div class="text-blue-400 font-bold text-[10px] border border-blue-500/20 px-2 py-1 rounded bg-blue-900/10">$TALONS SYNC</div>
     </div>
 
-    <div class="flex justify-center gap-1.5 mb-8">
-        <div class="slot foundation"></div><div class="slot foundation"></div><div class="slot foundation"></div><div class="slot foundation"></div>
+    <div class="flex justify-center gap-1.5 mb-6">
+        <div class="slot foundation" data-type="target"></div>
+        <div class="slot foundation" data-type="target"></div>
+        <div class="slot foundation" data-type="target"></div>
+        <div class="slot foundation" data-type="target"></div>
         <div class="w-4"></div>
-        <div class="slot bg-white/5 flex items-center justify-center text-xs">🎴</div>
+        <div class="slot bg-white/5 flex items-center justify-center text-xs opacity-30">🎴</div>
     </div>
 
     <div id="game-grid" class="flex justify-center gap-1.5">
@@ -44,32 +46,65 @@
     </div>
 
     <div class="fixed bottom-6 left-0 w-full px-6 text-center">
-        <button onclick="location.reload()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-xl shadow-lg uppercase text-xs mb-3">Nouvelle Partie</button>
-        <p class="text-[8px] text-white/30 tracking-widest uppercase">Slippage: 10% | Fee: 0.001 SOL | $TALONS</p>
+        <button onclick="location.reload()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-xl shadow-lg uppercase text-xs mb-2">Nouvelle Partie</button>
+        <p class="text-[8px] text-white/30 tracking-widest uppercase font-bold">10% SLIP | 0.001 SOL | EAGLE ENGINE</p>
     </div>
 
     <script>
-        const symbols = ['♠', '♥', '♣', '♦'];
         const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const symbols = ['♠', '♥', '♣', '♦'];
 
-        // Initialisation des colonnes pour le Drag & Drop
+        function getValIndex(v) { return values.indexOf(v); }
+        function isRed(s) { return s === '♥' || s === '♦'; }
+
+        // Initialisation du Drag & Drop avec Règles
         document.querySelectorAll('.column, .foundation').forEach(el => {
             new Sortable(el, {
                 group: 'shared',
                 animation: 150,
-                fallbackOnBody: true,
-                swapThreshold: 0.65
+                onAdd: function (evt) {
+                    const card = evt.item;
+                    const target = evt.to;
+                    const cardVal = card.dataset.val;
+                    const cardSym = card.dataset.sym;
+                    
+                    // Récupérer la carte du dessous (sauf si colonne vide)
+                    const lastCard = target.children[target.children.length - 2];
+                    
+                    let valid = false;
+
+                    if (!lastCard) {
+                        // Si colonne vide, seul le ROI (K) peut aller là
+                        if (cardVal === 'K') valid = true;
+                    } else {
+                        const lastVal = lastCard.dataset.val;
+                        const lastSym = lastCard.dataset.sym;
+
+                        // RÈGLE : Couleur alternée et Valeur -1
+                        if (isRed(cardSym) !== isRed(lastSym)) {
+                            if (getValIndex(cardVal) === getValIndex(lastVal) - 1) {
+                                valid = true;
+                            }
+                        }
+                    }
+
+                    if (!valid) {
+                        evt.from.appendChild(card); // Retour à l'envoyeur
+                    }
+                }
             });
         });
 
         function createCard(val, sym, colId) {
             const card = document.createElement('div');
-            card.className = `card ${(sym === '♥' || sym === '♦') ? 'red' : 'black'}`;
+            card.className = `card ${isRed(sym) ? 'red' : 'black'}`;
+            card.dataset.val = val;
+            card.dataset.sym = sym;
             card.innerHTML = `${val}<br>${sym}`;
             document.getElementById(colId).appendChild(card);
         }
 
-        // Distribution
+        // Setup Initial (Visuel propre)
         for(let i=1; i<=7; i++) {
             for(let j=0; j<i; j++) {
                 const rV = values[Math.floor(Math.random() * values.length)];
