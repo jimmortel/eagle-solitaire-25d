@@ -4,46 +4,79 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Eagle Solitaire Pro 🦅</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/index.umd.min.js"></script>
+    <script src="access.js"></script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background: radial-gradient(circle at center, #1a472a 0%, #0d2415 100%); height: 100vh; overflow: hidden; margin: 0; font-family: sans-serif; color: white; touch-action: none; }
-        .card { width: 44px; height: 65px; border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 1px solid #ddd; position: relative; background: white; }
+        .card { width: 44px; height: 65px; border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 1px solid #ddd; position: relative; background: white; color: black; }
         .card.hidden { background: #2563eb !important; border: 2px solid white; color: transparent !important; }
         .card.red { color: #e11d48; } .card.black { color: #111; }
         .column { min-height: 280px; width: 44px; display: flex; flex-direction: column; align-items: center; }
         .column .card { margin-bottom: -48px; }
         .slot { width: 44px; height: 65px; border: 1px dashed rgba(255,255,255,0.15); border-radius: 5px; position: relative; }
         .foundation .card { margin-bottom: 0 !important; position: absolute; }
+        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 50; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body class="p-2">
+    <div id="overlay">
+        <button onclick="handleStart()" id="main-start" class="bg-red-600 border-2 border-white text-white px-8 py-4 rounded-xl font-black uppercase text-lg shadow-2xl">
+            Lancer Eagle Solitaire 🦅
+        </button>
+    </div>
+
     <div class="flex justify-between items-center mb-4 px-1">
-        <button onclick="window.location.href='https://eagle-tetris.vercel.app'" class="bg-black/80 text-[9px] px-2 py-1.5 rounded border border-white/20 uppercase font-bold">⬅ Hub</button>
+        <button onclick="window.location.href='index.html'" class="bg-black/80 text-[9px] px-2 py-1.5 rounded border border-white/20 uppercase font-bold">⬅ Hub</button>
         <div class="text-blue-400 font-bold text-[9px] border border-blue-500/20 px-2 py-1 rounded bg-blue-900/10">$TALONS SYNC</div>
     </div>
+
     <div class="flex justify-between px-2 mb-8">
         <div class="flex gap-1"><div class="slot foundation"></div><div class="slot foundation"></div><div class="slot foundation"></div><div class="slot foundation"></div></div>
-        <div class="flex gap-1"><div id="waste" class="slot"></div><div id="deck" onclick="drawCard()" class="slot bg-blue-600 border-2 border-white flex items-center justify-center font-bold">🦅</div></div>
+        <div class="flex gap-1"><div id="waste" class="slot"></div><div id="deck" onclick="drawCard()" class="slot bg-blue-600 border-2 border-white flex items-center justify-center font-bold cursor-pointer">🦅</div></div>
     </div>
+
     <div id="game-grid" class="flex justify-center gap-1.5">
         <div class="column" id="col1"></div><div class="column" id="col2"></div><div class="column" id="col3"></div><div class="column" id="col4"></div><div class="column" id="col5"></div><div class="column" id="col6"></div><div class="column" id="col7"></div>
     </div>
-    <div class="fixed bottom-4 left-0 w-full px-6 text-center">
-        <button onclick="location.reload()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-xl shadow-lg uppercase text-xs">Nouvelle Partie</button>
+
+    <div class="fixed bottom-4 left-0 w-full px-6 flex gap-2">
+        <button onclick="handleRevive()" class="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg uppercase text-[10px]">Eagle Eye (5 $TALON)</button>
+        <button onclick="location.reload()" class="flex-1 bg-yellow-500 text-black font-black py-4 rounded-xl shadow-lg uppercase text-[10px]">Restart</button>
     </div>
 
     <script>
         const suits = ['♠', '♥', '♣', '♦'], values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
         let fullDeck = [];
 
-        // --- CONFIG SUPABASE ---
         const SUPABASE_URL = "https://rjkyjqmydriagpiatbsr.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqa3lqcW15ZHJpYWdwaWF0YnNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMzQ5MTEsImV4cCI6MjA4OTYxMDkxMX0.4-uEBo_SFqfMgPpTuDQRxTYLeUoI_ZMZlwtkBJzK_X0";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        async function handleStart() {
+            const access = await checkGameAccess('solitaire');
+            if(access) {
+                document.getElementById('overlay').style.display = 'none';
+                init();
+            }
+        }
+
+        async function handleRevive() {
+            if (confirm("Eagle Eye : Utiliser 5 $TALON pour mélanger le deck restant ?")) {
+                const provider = new ethers.BrowserProvider(window.ethereum);
+                const signer = await provider.getSigner();
+                if (await executeTalonPayment(signer, 5)) {
+                    fullDeck.sort(() => Math.random() - 0.5);
+                    alert("🦅 Deck mélangé !");
+                }
+            }
+        }
+
         function init() {
+            fullDeck = [];
             suits.forEach(s => values.forEach(v => fullDeck.push({v, s})));
             fullDeck.sort(() => Math.random() - 0.5);
             for(let i=1; i<=7; i++) { for(let j=0; j<i; j++) { const c = fullDeck.pop(); addC(`col${i}`, c.v, c.s, j < i-1); } }
@@ -52,39 +85,24 @@
         function addC(t, v, s, h) {
             const c = document.createElement('div');
             c.className = `card ${h ? 'hidden' : (s==='♥'||s==='♦' ? 'red' : 'black')}`;
-            c.dataset.val = v; c.dataset.sym = s; c.innerHTML = h ? '' : `<div>${v}</div><div>${s}</div>`;
+            c.dataset.val = v; c.dataset.sym = s; 
+            c.innerHTML = h ? '' : `<div>${v}</div><div>${s}</div>`;
             document.getElementById(t).appendChild(c);
         }
 
         function drawCard() {
             const w = document.getElementById('waste');
             if(fullDeck.length > 0) { const c = fullDeck.pop(); w.innerHTML = ''; addC('waste', c.v, c.s, false); }
-            else { location.reload(); }
+            else { alert("🦅 Deck vide ! Utilisez Eagle Eye pour mélanger."); }
         }
 
-        // --- LOGIQUE DE VICTOIRE ET SUPABASE ---
         async function checkWin() {
-            const foundations = document.querySelectorAll('.foundation');
-            let totalCards = 0;
-            foundations.forEach(f => totalCards += f.children.length);
-            
+            const totalCards = document.querySelectorAll('.foundation .card').length;
             if (totalCards === 52) {
-                const username = prompt("BIEN JOUÉ PILOTE ! Solitaire terminé ! 🦅\nEntre ton pseudo pour le Hall of Fame :");
-                if (username) {
-                    const { error } = await supabaseClient
-                        .from('leaderboard')
-                        .insert([{ username: username, score: 5000 }]); // Score fixe pour une victoire
-
-                    if (error) {
-                        console.error("Erreur d'envoi :", error.message);
-                        alert("Erreur lors de l'enregistrement...");
-                    } else {
-                        alert("Record enregistré ! Direction le Hall of Fame.");
-                        // Redirection vers le projet centralisé du Tetris où se trouve le hall.html
-                        window.location.href = 'https://eagle-tetris-game.vercel.app/hall.html';
-                    }
-                } else {
-                    location.reload();
+                const name = prompt("VICTOIRE ! Entre ton nom :");
+                if (name) {
+                    await supabaseClient.from('leaderboard').insert([{ username: name, score: 5000, game: 'solitaire' }]);
+                    window.location.href = 'hall.html';
                 }
             }
         }
@@ -97,7 +115,9 @@
                 else { 
                     const cv = values.indexOf(c.dataset.val), lv = values.indexOf(l.dataset.val);
                     const cr = (c.dataset.sym==='♥'||c.dataset.sym==='♦'), lr = (l.dataset.sym==='♥'||l.dataset.sym==='♦');
-                    if(cr !== lr && cv === lv - 1) ok = true;
+                    if(t.classList.contains('foundation')) {
+                        if(c.dataset.sym === l.dataset.sym && cv === lv + 1) ok = true;
+                    } else if(cr !== lr && cv === lv - 1) ok = true;
                 }
                 if(!ok) evt.from.appendChild(c);
                 if(evt.from.lastElementChild) {
@@ -108,10 +128,9 @@
                         last.innerHTML = `<div>${last.dataset.val}</div><div>${last.dataset.sym}</div>`;
                     }
                 }
-                checkWin(); // Vérification après chaque mouvement
+                checkWin();
             }});
         });
-        init();
     </script>
 </body>
 </html>
