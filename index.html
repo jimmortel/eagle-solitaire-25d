@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Eagle Solitaire Pro</title>
+    <title>Eagle Solitaire Pro 🦅</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background: radial-gradient(circle at center, #1a472a 0%, #0d2415 100%); height: 100vh; overflow: hidden; margin: 0; font-family: sans-serif; color: white; touch-action: none; }
         .card { width: 44px; height: 65px; border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 1px solid #ddd; position: relative; background: white; }
@@ -32,25 +33,62 @@
     <div class="fixed bottom-4 left-0 w-full px-6 text-center">
         <button onclick="location.reload()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-xl shadow-lg uppercase text-xs">Nouvelle Partie</button>
     </div>
-        <script>
+
+    <script>
         const suits = ['♠', '♥', '♣', '♦'], values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
         let fullDeck = [];
+
+        // --- CONFIG SUPABASE ---
+        const SUPABASE_URL = "https://rjkyjqmydriagpiatbsr.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqa3lqcW15ZHJpYWdwaWF0YnNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMzQ5MTEsImV4cCI6MjA4OTYxMDkxMX0.4-uEBo_SFqfMgPpTuDQRxTYLeUoI_ZMZlwtkBJzK_X0";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         function init() {
             suits.forEach(s => values.forEach(v => fullDeck.push({v, s})));
             fullDeck.sort(() => Math.random() - 0.5);
             for(let i=1; i<=7; i++) { for(let j=0; j<i; j++) { const c = fullDeck.pop(); addC(`col${i}`, c.v, c.s, j < i-1); } }
         }
+
         function addC(t, v, s, h) {
             const c = document.createElement('div');
             c.className = `card ${h ? 'hidden' : (s==='♥'||s==='♦' ? 'red' : 'black')}`;
             c.dataset.val = v; c.dataset.sym = s; c.innerHTML = h ? '' : `<div>${v}</div><div>${s}</div>`;
             document.getElementById(t).appendChild(c);
         }
+
         function drawCard() {
             const w = document.getElementById('waste');
             if(fullDeck.length > 0) { const c = fullDeck.pop(); w.innerHTML = ''; addC('waste', c.v, c.s, false); }
             else { location.reload(); }
         }
+
+        // --- LOGIQUE DE VICTOIRE ET SUPABASE ---
+        async function checkWin() {
+            const foundations = document.querySelectorAll('.foundation');
+            let totalCards = 0;
+            foundations.forEach(f => totalCards += f.children.length);
+            
+            if (totalCards === 52) {
+                const username = prompt("BIEN JOUÉ PILOTE ! Solitaire terminé ! 🦅\nEntre ton pseudo pour le Hall of Fame :");
+                if (username) {
+                    const { error } = await supabaseClient
+                        .from('leaderboard')
+                        .insert([{ username: username, score: 5000 }]); // Score fixe pour une victoire
+
+                    if (error) {
+                        console.error("Erreur d'envoi :", error.message);
+                        alert("Erreur lors de l'enregistrement...");
+                    } else {
+                        alert("Record enregistré ! Direction le Hall of Fame.");
+                        // Redirection vers le projet centralisé du Tetris où se trouve le hall.html
+                        window.location.href = 'https://eagle-tetris-game.vercel.app/hall.html';
+                    }
+                } else {
+                    location.reload();
+                }
+            }
+        }
+
         document.querySelectorAll('.column, .foundation, #waste').forEach(el => {
             new Sortable(el, { group: 'shared', animation: 150, onAdd: (evt) => {
                 const c = evt.item, t = evt.to, l = t.children[t.children.length - 2];
@@ -70,6 +108,7 @@
                         last.innerHTML = `<div>${last.dataset.val}</div><div>${last.dataset.sym}</div>`;
                     }
                 }
+                checkWin(); // Vérification après chaque mouvement
             }});
         });
         init();
